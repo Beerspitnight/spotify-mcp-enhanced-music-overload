@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "spotify": {
+      "command": "/usr/local/bin/python",
+      "args": ["/absolute/path/to/spotify-mcp/src/server.py"],
+      "env": {
+        "SPOTIFY_CLIENT_ID": "your_client_id_here",
+        "SPOTIFY_CLIENT_SECRET": "your_client_secret_here",
+        "SPOTIFY_REDIRECT_URI": "http://127.0.0.1:8888/callback",
+        "SPOTIFY_CACHE_PATH": "/absolute/path/to/.spotify_cache"
+      }
+    }
+  }
+}
