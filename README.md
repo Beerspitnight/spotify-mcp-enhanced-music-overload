@@ -18,9 +18,16 @@ A Model Context Protocol (MCP) server that enables Claude to interact with Spoti
 - ✅ **Create curated playlists** - Automated playlist based on your top tracks + recommendations
 - ✅ Find duplicate tracks in playlists
 
+### Audio Analysis (Phase 2 - NEW! 🎵)
+- ✅ **Get audio features** - BPM, musical key, energy, danceability, valence
+- ✅ **Local analysis** - Uses librosa to analyze 30-second preview clips
+- ✅ **Smart caching** - Results cached to avoid re-analysis
+- ⚠️ **Note**: Requires optional `[audio]` dependencies (see installation below)
+
 ### Reliability Features
 - ✅ Automatic retry on Spotify API rate limits (HTTP 429)
 - ✅ Batch processing for large operations (100+ tracks)
+- ✅ Async execution - Audio analysis runs in thread pool (no blocking)
 
 ## Prerequisites
 
@@ -44,14 +51,26 @@ A Model Context Protocol (MCP) server that enables Claude to interact with Spoti
 
 ### 2. Install Dependencies
 
+**Basic Installation** (playlist management only):
 ```bash
 cd spotify-mcp
 pip install -e .
 ```
 
+**With Audio Analysis** (recommended for full features):
+```bash
+pip install -e .[audio]
+```
+
+This installs additional dependencies for audio feature extraction:
+- `librosa` - Audio analysis library
+- `soundfile` - Audio file I/O
+- `numpy` - Numerical computing
+- `requests` - HTTP library
+
 Or with uv:
 ```bash
-uv pip install -e .
+uv pip install -e .[audio]
 ```
 
 ### 3. Configure Environment
@@ -238,6 +257,32 @@ Claude: [Uses create_curated_playlist_from_top_tracks tool]
 🔗 Playlist URL: https://open.spotify.com/playlist/abc123
 ```
 
+### Get Audio Features (NEW! 🎵)
+```
+You: Analyze the audio features of track ID "2Foc5Q5nqNiosCNqttzHof"
+
+Claude: [Uses get_audio_features tool]
+🎵 Audio Features (Track: 2Foc5Q5nqNiosCNqttzHof)
+
+🎼 Musical Properties:
+   - Tempo: 116.2 BPM
+   - Key: C major
+
+📊 Energy & Mood:
+   - Energy: 0.75 (0=calm, 1=intense)
+   - Danceability: 0.65 (0=low, 1=high)
+   - Valence: 0.80 (0=sad, 1=happy)
+
+ℹ️  Analysis Method: librosa
+⚠️  Note: Based on 30-second preview
+```
+
+**Use Cases**:
+- Find tracks with similar BPM for DJ mixes
+- Detect musical key for harmonic mixing
+- Filter tracks by energy level for workout playlists
+- Analyze mood (valence) for themed playlists
+
 ## Available Tools
 
 | Tool | Description | Features |
@@ -252,8 +297,9 @@ Claude: [Uses create_curated_playlist_from_top_tracks tool]
 | `find_duplicates` | Find duplicate tracks in a playlist | Case-insensitive matching |
 | **`get_top_tracks`** | **Get user's most-played tracks** | **Time periods: 4 weeks, 6 months, all time** |
 | **`create_curated_playlist_from_top_tracks`** | **Auto-create playlist from top tracks + recommendations** | **One-command automation** |
+| **`get_audio_features`** 🎵 | **Analyze track audio (BPM, key, energy, etc.)** | **Local librosa analysis, Smart caching, Requires [audio] install** |
 
-**Total**: 10 tools available
+**Total**: 11 tools available
 
 ## Reliability Features
 
@@ -307,6 +353,19 @@ Operations that modify playlists automatically batch requests:
   ```
 - After authentication succeeds, the token is cached for Claude Desktop/CLI
 
+### "Audio analysis not available" error
+- Install optional audio dependencies:
+  ```bash
+  pip install -e .[audio]
+  ```
+- This adds librosa, soundfile, numpy, and requests
+- Without these dependencies, the `get_audio_features` tool will not be available
+
+### "No audio features available" message
+- The track may not have a preview URL (~30-40% of tracks lack previews)
+- Preview availability varies by region and licensing agreements
+- Try searching for different tracks or newer releases (more likely to have previews)
+
 ## Security Notes
 
 - **Never commit** your `.env` file or `.spotify_cache` file to version control
@@ -326,11 +385,18 @@ pytest
 ```
 spotify-mcp/
 ├── src/
-│   ├── __init__.py
-│   ├── server.py          # Main MCP server
-│   └── spotify_client.py  # Spotify API wrapper
-├── pyproject.toml         # Dependencies
-├── .env.example           # Example environment variables
+│   ├── analysis/                  # Audio analysis module (Phase 2)
+│   │   ├── __init__.py
+│   │   ├── audio_analyzer.py      # AudioFeatureAnalyzer class
+│   │   └── exceptions.py          # Custom exceptions
+│   ├── clients/
+│   │   └── spotify_client.py      # Spotify API wrapper
+│   ├── logic/
+│   │   ├── playlist_logic.py      # Playlist operations
+│   │   └── artist_logic.py        # Artist operations
+│   └── server.py                  # Main MCP server
+├── pyproject.toml                 # Dependencies (base + [audio])
+├── .env.example                   # Example environment variables
 └── README.md
 ```
 
@@ -343,12 +409,14 @@ MIT License - feel free to modify and distribute.
 
 ## Contributing
 
-Issues and pull requests welcome! This is a minimal implementation that can be extended with:
+Issues and pull requests welcome! This implementation includes core features and can be extended with:
 - More Spotify API endpoints
-- Advanced playlist curation algorithms
-- Audio feature analysis
+- Advanced playlist curation algorithms (Phase 2 in progress)
+- ✅ ~~Audio feature analysis~~ (Phase 2 Complete!)
 - User library management
 - Collaborative filtering
+- Setlist generators (DJ sets, concert setlists)
+- MusicBrainz/Genius API integration
 
 ## Resources
 
