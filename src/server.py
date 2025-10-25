@@ -13,7 +13,9 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-from spotify_client import SpotifyClient
+from clients.spotify_client import SpotifyClient
+from logic.playlist_logic import PlaylistLogic
+from logic.artist_logic import ArtistLogic
 
 
 # Load environment variables
@@ -22,8 +24,10 @@ load_dotenv()
 # Initialize MCP server
 server = Server("spotify-mcp")
 
-# Global Spotify client (initialized in main)
+# Global clients and logic (initialized in main)
 spotify_client: SpotifyClient = None
+playlist_logic: PlaylistLogic = None
+artist_logic: ArtistLogic = None
 
 
 @server.list_tools()
@@ -241,6 +245,167 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["playlist_name"]
             }
+        ),
+        # Phase 1 - Playlist Intelligence Tools
+        Tool(
+            name="get_playlist_stats",
+            description="Get comprehensive statistics for a playlist including duration, genre breakdown, and average release year",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "playlist_id": {
+                        "type": "string",
+                        "description": "Spotify playlist ID"
+                    }
+                },
+                "required": ["playlist_id"]
+            }
+        ),
+        Tool(
+            name="merge_playlists",
+            description="Merge multiple playlists into a new playlist with optional deduplication",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "playlist_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of Spotify playlist IDs to merge"
+                    },
+                    "new_playlist_name": {
+                        "type": "string",
+                        "description": "Name for the new merged playlist"
+                    },
+                    "remove_duplicates": {
+                        "type": "boolean",
+                        "description": "Whether to remove duplicate tracks (default: true)"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description for the new playlist (optional)"
+                    },
+                    "public": {
+                        "type": "boolean",
+                        "description": "Whether the playlist should be public (default: false)"
+                    }
+                },
+                "required": ["playlist_ids", "new_playlist_name"]
+            }
+        ),
+        Tool(
+            name="compare_playlists",
+            description="Compare two playlists to find shared tracks and unique tracks in each",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "playlist_id_1": {
+                        "type": "string",
+                        "description": "First Spotify playlist ID"
+                    },
+                    "playlist_id_2": {
+                        "type": "string",
+                        "description": "Second Spotify playlist ID"
+                    }
+                },
+                "required": ["playlist_id_1", "playlist_id_2"]
+            }
+        ),
+        Tool(
+            name="set_collaborative",
+            description="Set the collaborative status of a playlist",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "playlist_id": {
+                        "type": "string",
+                        "description": "Spotify playlist ID"
+                    },
+                    "collaborative": {
+                        "type": "boolean",
+                        "description": "Whether the playlist should be collaborative"
+                    }
+                },
+                "required": ["playlist_id", "collaborative"]
+            }
+        ),
+        # Phase 1 - Artist Deep Dive Tools
+        Tool(
+            name="get_artist_discography",
+            description="Get an artist's complete discography grouped by album type (albums, singles, compilations)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "artist_id": {
+                        "type": "string",
+                        "description": "Spotify artist ID"
+                    },
+                    "include_groups": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Album types to include: album, single, compilation, appears_on (default: album, single, compilation)"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum albums per group (default: 50)",
+                        "minimum": 1,
+                        "maximum": 50
+                    }
+                },
+                "required": ["artist_id"]
+            }
+        ),
+        Tool(
+            name="get_related_artists",
+            description="Get artists related to a given artist based on Spotify's analysis",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "artist_id": {
+                        "type": "string",
+                        "description": "Spotify artist ID"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of related artists (max: 20, default: 20)",
+                        "minimum": 1,
+                        "maximum": 20
+                    }
+                },
+                "required": ["artist_id"]
+            }
+        ),
+        Tool(
+            name="get_artist_top_tracks",
+            description="Get an artist's top tracks by popularity",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "artist_id": {
+                        "type": "string",
+                        "description": "Spotify artist ID"
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "ISO 3166-1 alpha-2 country code (default: US)"
+                    }
+                },
+                "required": ["artist_id"]
+            }
+        ),
+        # Phase 2 - Audio Analysis Tool
+        Tool(
+            name="get_audio_features",
+            description="Get audio features (BPM, key, energy, etc.) for a track using local analysis of its 30-second preview. Requires track to have preview available (~60-70% of tracks).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "track_id": {
+                        "type": "string",
+                        "description": "Spotify track ID"
+                    }
+                },
+                "required": ["track_id"]
+            }
         )
     ]
 
@@ -438,6 +603,217 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
             return [TextContent(type="text", text=result_text)]
 
+        # Phase 1 - Playlist Intelligence Tools
+        elif name == "get_playlist_stats":
+            stats = playlist_logic.get_playlist_stats(arguments["playlist_id"])
+
+            # Format genres for display
+            genres_display = ", ".join(list(stats['genre_breakdown'].keys())[:5])
+
+            result_text = (
+                f"📊 Playlist Stats: {stats['playlist_name']}\n\n"
+                f"📝 Description: {stats['playlist_description']}\n"
+                f"👤 Owner: {stats['owner']}\n"
+                f"🔓 Visibility: {'Public' if stats['public'] else 'Private'}\n"
+                f"🤝 Collaborative: {'Yes' if stats['collaborative'] else 'No'}\n\n"
+                f"📀 Total Tracks: {stats['total_tracks']}\n"
+                f"⏱️  Duration: {stats['total_duration_formatted']}\n"
+                f"📅 Avg Release Year: {stats['avg_release_year']}\n\n"
+                f"🎸 Top Genres: {genres_display}\n\n"
+            )
+
+            if stats.get('earliest_track'):
+                result_text += (
+                    f"📜 Oldest Track: {stats['earliest_track']['name']} by {stats['earliest_track']['artist']} "
+                    f"({stats['earliest_track']['release_date']})\n"
+                )
+
+            if stats.get('newest_track'):
+                result_text += (
+                    f"🆕 Newest Track: {stats['newest_track']['name']} by {stats['newest_track']['artist']} "
+                    f"({stats['newest_track']['release_date']})\n"
+                )
+
+            return [TextContent(type="text", text=result_text)]
+
+        elif name == "merge_playlists":
+            result = playlist_logic.merge_playlists(
+                playlist_ids=arguments["playlist_ids"],
+                new_playlist_name=arguments["new_playlist_name"],
+                remove_duplicates=arguments.get("remove_duplicates", True),
+                description=arguments.get("description", ""),
+                public=arguments.get("public", False)
+            )
+
+            source_list = "\n".join([
+                f"   - {p['name']} ({p['track_count']} tracks)"
+                for p in result['source_playlists']
+            ])
+
+            result_text = (
+                f"✅ Merged Playlists Successfully!\n\n"
+                f"🎵 New Playlist: {result['playlist_name']}\n"
+                f"🔗 URL: {result['playlist_url']}\n\n"
+                f"📊 Summary:\n"
+                f"   - Tracks Added: {result['tracks_added']}\n"
+                f"   - Duplicates Removed: {result['duplicates_removed']}\n\n"
+                f"📋 Source Playlists:\n{source_list}"
+            )
+
+            return [TextContent(type="text", text=result_text)]
+
+        elif name == "compare_playlists":
+            result = playlist_logic.compare_playlists(
+                playlist_id_1=arguments["playlist_id_1"],
+                playlist_id_2=arguments["playlist_id_2"]
+            )
+
+            result_text = (
+                f"🔍 Playlist Comparison\n\n"
+                f"📋 Playlist 1: {result['playlist_1_name']}\n"
+                f"📋 Playlist 2: {result['playlist_2_name']}\n\n"
+                f"📊 Summary:\n"
+                f"   - Shared Tracks: {result['shared_count']}\n"
+                f"   - Unique to '{result['playlist_1_name']}': {result['unique_1_count']}\n"
+                f"   - Unique to '{result['playlist_2_name']}': {result['unique_2_count']}\n\n"
+            )
+
+            if result['shared_count'] > 0:
+                result_text += f"🤝 Shared Tracks (showing first 5):\n"
+                for i, track in enumerate(result['shared_tracks'][:5], 1):
+                    result_text += f"   {i}. {track['name']} by {track['artist']}\n"
+
+            return [TextContent(type="text", text=result_text)]
+
+        elif name == "set_collaborative":
+            result = playlist_logic.set_collaborative(
+                playlist_id=arguments["playlist_id"],
+                collaborative=arguments["collaborative"]
+            )
+
+            status = "collaborative" if result['collaborative'] else "non-collaborative"
+            result_text = (
+                f"✅ Successfully updated playlist!\n\n"
+                f"🎵 Playlist: {result['playlist_name']}\n"
+                f"🤝 Status: Now {status}\n"
+                f"📋 ID: {result['playlist_id']}"
+            )
+
+            return [TextContent(type="text", text=result_text)]
+
+        # Phase 1 - Artist Deep Dive Tools
+        elif name == "get_artist_discography":
+            result = artist_logic.get_artist_discography(
+                artist_id=arguments["artist_id"],
+                include_groups=arguments.get("include_groups"),
+                limit=arguments.get("limit", 50)
+            )
+
+            result_text = (
+                f"🎸 Artist Discography: {result['artist_name']}\n\n"
+                f"📊 Stats:\n"
+                f"   - Total Releases: {result['total_releases']}\n"
+                f"   - Popularity: {result['popularity']}/100\n"
+                f"   - Followers: {result['followers']:,}\n"
+                f"   - Genres: {', '.join(result['genres'][:5]) if result['genres'] else 'N/A'}\n\n"
+            )
+
+            if 'albums' in result and result['albums']:
+                result_text += f"💿 Albums ({len(result['albums'])}):\n"
+                for album in result['albums'][:5]:
+                    result_text += f"   - {album['name']} ({album['release_date'][:4]})\n"
+                if len(result['albums']) > 5:
+                    result_text += f"   ... and {len(result['albums']) - 5} more\n"
+                result_text += "\n"
+
+            if 'singles' in result and result['singles']:
+                result_text += f"💽 Singles ({len(result['singles'])}) - showing first 5:\n"
+                for single in result['singles'][:5]:
+                    result_text += f"   - {single['name']} ({single['release_date'][:4]})\n"
+                if len(result['singles']) > 5:
+                    result_text += f"   ... and {len(result['singles']) - 5} more\n"
+
+            return [TextContent(type="text", text=result_text)]
+
+        elif name == "get_related_artists":
+            result = artist_logic.get_related_artists(
+                artist_id=arguments["artist_id"],
+                limit=arguments.get("limit", 20)
+            )
+
+            result_text = (
+                f"🔗 Artists Related to: {result['original_artist']['name']}\n\n"
+                f"Found {result['count']} related artist(s):\n\n"
+            )
+
+            for i, artist in enumerate(result['related_artists'], 1):
+                genres = ", ".join(artist['genres'][:3]) if artist['genres'] else "N/A"
+                result_text += (
+                    f"{i}. {artist['name']}\n"
+                    f"   Popularity: {artist['popularity']}/100\n"
+                    f"   Genres: {genres}\n"
+                    f"   Followers: {artist['followers']:,}\n"
+                    f"   URL: {artist['url']}\n\n"
+                )
+
+            return [TextContent(type="text", text=result_text)]
+
+        elif name == "get_artist_top_tracks":
+            result = artist_logic.get_artist_top_tracks(
+                artist_id=arguments["artist_id"],
+                country=arguments.get("country", "US")
+            )
+
+            result_text = (
+                f"⭐ Top Tracks: {result['artist_name']}\n"
+                f"🌍 Country: {result['country']}\n\n"
+                f"Found {result['count']} track(s):\n\n"
+            )
+
+            for i, track in enumerate(result['tracks'], 1):
+                duration_min = track['duration_ms'] // 60000
+                duration_sec = (track['duration_ms'] % 60000) // 1000
+                result_text += (
+                    f"{i}. {track['name']}\n"
+                    f"   Album: {track['album']}\n"
+                    f"   Popularity: {track['popularity']}/100\n"
+                    f"   Duration: {duration_min}:{duration_sec:02d}\n"
+                    f"   URL: {track['url']}\n\n"
+                )
+
+            return [TextContent(type="text", text=result_text)]
+
+        # Phase 2 - Audio Analysis Tool
+        elif name == "get_audio_features":
+            features = await spotify_client.get_track_audio_features(
+                track_id=arguments["track_id"]
+            )
+
+            if not features:
+                return [TextContent(
+                    type="text",
+                    text="❌ No audio features available. The track may not have a preview URL."
+                )]
+
+            # Format for display
+            key_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+            mode_names = {0: "minor", 1: "major"}
+
+            result_text = (
+                f"🎵 Audio Features (Track: {arguments['track_id']})\n\n"
+                f"🎼 Musical Properties:\n"
+                f"   - Tempo: {features['tempo']:.1f} BPM\n"
+                f"   - Key: {key_names[features['key']]} {mode_names[features['mode']]}\n\n"
+                f"📊 Energy & Mood:\n"
+                f"   - Energy: {features['energy']:.2f} (0=calm, 1=intense)\n"
+                f"   - Danceability: {features['danceability']:.2f} (0=low, 1=high)\n"
+                f"   - Valence: {features['valence']:.2f} (0=sad, 1=happy)\n\n"
+                f"ℹ️  Analysis Method: {features['analysis_method']}\n"
+                f"⚠️  Note: Based on 30-second preview\n"
+            )
+
+            return [TextContent(type="text", text=result_text)]
+
         else:
             return [TextContent(
                 type="text",
@@ -453,19 +829,19 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
 async def main():
     """Main entry point for the MCP server."""
-    global spotify_client
-    
+    global spotify_client, playlist_logic, artist_logic
+
     # Get credentials from environment
     client_id = os.getenv("SPOTIFY_CLIENT_ID")
     client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
     redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
     cache_path = os.getenv("SPOTIFY_CACHE_PATH", ".spotify_cache")
-    
+
     if not client_id or not client_secret:
         print("❌ Error: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET must be set", file=sys.stderr)
         print("Create a .env file based on .env.example", file=sys.stderr)
         sys.exit(1)
-    
+
     # Initialize Spotify client
     print("🎵 Initializing Spotify MCP Server...", file=sys.stderr)
     spotify_client = SpotifyClient(
@@ -474,14 +850,18 @@ async def main():
         redirect_uri=redirect_uri,
         cache_path=cache_path
     )
-    
+
     # Authenticate (will open browser on first run)
     try:
         spotify_client.authenticate()
     except Exception as e:
         print(f"❌ Authentication failed: {e}", file=sys.stderr)
         sys.exit(1)
-    
+
+    # Initialize business logic
+    playlist_logic = PlaylistLogic(spotify_client)
+    artist_logic = ArtistLogic(spotify_client)
+
     print("✅ Spotify MCP Server ready!", file=sys.stderr)
     
     # Run the MCP server
