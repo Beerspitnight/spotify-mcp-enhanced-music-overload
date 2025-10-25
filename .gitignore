@@ -29,6 +29,9 @@ env/
 .env
 .spotify_cache
 
+# Audio analysis cache
+.audio_cache/
+
 # IDE
 .vscode/
 .idea/
