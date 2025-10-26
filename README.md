@@ -35,7 +35,7 @@ A Model Context Protocol (MCP) server that enables Claude to interact with Spoti
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Click "Create app"
 3. Fill in:
-   - **App name**: "My Spotify MCP Server" (or your preferred name)
+   - **App name**: "spotify-mcp-enhanced-music-overload" 
    - **App description**: "MCP server for Claude integration"
    - **Redirect URI**: `http://127.0.0.1:8888/callback`
    - **APIs used**: Check "Web API"
@@ -333,6 +333,9 @@ spotify-mcp/
 ├── .env.example           # Example environment variables
 └── README.md
 ```
+
+## Credits
+Access from https://getsongbpm.com/ via their free API provides song-analysis including beats-per-minute.  Thanks, GetSongBPM.com
 
 ## License
 
