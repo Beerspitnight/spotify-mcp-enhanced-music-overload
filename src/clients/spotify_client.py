@@ -7,7 +7,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from typing import Optional, List, Dict, Any, Callable
 
-# Conditional import for audio analysis (optional feature)
+# Import new audio features service
 try:
     import sys
     import os
@@ -16,13 +16,16 @@ try:
     if src_dir not in sys.path:
         sys.path.insert(0, src_dir)
 
-    from analysis.audio_analyzer import AudioFeatureAnalyzer
-    from analysis.exceptions import AudioAnalysisError
-    AUDIO_ANALYSIS_ENABLED = True
+    from features.service import AudioFeaturesService
+    from features.models import SpotifyTrack
+    from features.clients import GetSongBPMClient
+    AUDIO_FEATURES_ENABLED = True
 except ImportError as e:
-    AudioFeatureAnalyzer = None
-    AudioAnalysisError = None
-    AUDIO_ANALYSIS_ENABLED = False
+    AudioFeaturesService = None
+    SpotifyTrack = None
+    GetSongBPMClient = None
+    AUDIO_FEATURES_ENABLED = False
+    print(f"⚠️  Audio features disabled: {e}", file=sys.stderr)
 
 
 class SpotifyClient:
@@ -33,16 +36,18 @@ class SpotifyClient:
         client_id: str,
         client_secret: str,
         redirect_uri: str,
-        cache_path: str = ".spotify_cache"
+        cache_path: str = ".spotify_cache",
+        getsongbpm_api_key: Optional[str] = None
     ):
         """
         Initialize Spotify client with OAuth.
-        
+
         Args:
             client_id: Spotify application client ID
             client_secret: Spotify application client secret
             redirect_uri: OAuth redirect URI (must match Spotify app settings)
             cache_path: Path to store OAuth tokens
+            getsongbpm_api_key: GetSongBPM API key (optional)
         """
         self.scope = " ".join([
             "playlist-modify-public",
@@ -52,7 +57,7 @@ class SpotifyClient:
             "user-library-read",
             "user-top-read",
         ])
-        
+
         self.auth_manager = SpotifyOAuth(
             client_id=client_id,
             client_secret=client_secret,
@@ -64,11 +69,21 @@ class SpotifyClient:
 
         self.sp: Optional[spotipy.Spotify] = None
 
-        # Initialize audio analyzer (optional feature)
-        if AUDIO_ANALYSIS_ENABLED:
-            self.audio_analyzer = AudioFeatureAnalyzer()
+        # Initialize audio features service (optional feature)
+        if AUDIO_FEATURES_ENABLED:
+            # Initialize GetSongBPM client if API key provided
+            getsongbpm_client = None
+            if getsongbpm_api_key:
+                getsongbpm_client = GetSongBPMClient(api_key=getsongbpm_api_key)
+                print("🎵 GetSongBPM client enabled", file=sys.stderr)
+            else:
+                print("ℹ️  GetSongBPM disabled (no API key)", file=sys.stderr)
+
+            self.audio_features_service = AudioFeaturesService(
+                getsongbpm_client=getsongbpm_client
+            )
         else:
-            self.audio_analyzer = None
+            self.audio_features_service = None
     
     def authenticate(self) -> None:
         """Authenticate with Spotify. Opens browser on first run."""
@@ -595,51 +610,56 @@ class SpotifyClient:
         track_id: str
     ) -> Optional[Dict[str, Any]]:
         """
-        Get audio features for a track using local analysis.
+        Get audio features for a track from multiple sources.
+
+        Uses waterfall strategy:
+        1. GetSongBPM (if API key configured)
+        2. MusicBrainz + AcousticBrainz
 
         Args:
             track_id: Spotify track ID
 
         Returns:
-            Dict with audio features or None if preview unavailable
+            Dict with audio features or None if unavailable
 
         Raises:
-            RuntimeError: If analysis fails or audio analysis not installed
+            RuntimeError: If service not available or authentication fails
 
         Note:
-            Replaces deprecated sp.audio_features() API.
-            Analyzes 30-second preview with librosa.
-            ~60-70% of tracks have previews available.
-            Requires optional [audio] dependencies.
+            Replaces deprecated sp.audio_features() API and librosa-based approach.
+            Coverage depends on external databases (GetSongBPM, AcousticBrainz).
         """
-        if not self.audio_analyzer:
+        if not self.audio_features_service:
             raise RuntimeError(
-                "Audio analysis not available. Install with: pip install .[audio]"
+                "Audio features service not available. Check dependencies."
             )
 
         if not self.sp:
             raise RuntimeError("Not authenticated. Call authenticate() first.")
 
-        # Get track details including preview_url
+        # Get track metadata from Spotify
         try:
-            track = self.sp.track(track_id)
-            preview_url = track.get('preview_url')
+            track_data = self.sp.track(track_id)
 
-            if not preview_url:
+            # Build SpotifyTrack model
+            spotify_track = SpotifyTrack(
+                id=track_id,
+                name=track_data['name'],
+                artist=", ".join([artist['name'] for artist in track_data['artists']]),
+                duration_ms=track_data['duration_ms'],
+                isrc=track_data.get('external_ids', {}).get('isrc')
+            )
+
+            # Get features using the service
+            features = await self.audio_features_service.get_features(spotify_track)
+
+            if features:
+                # Convert pydantic model to dict for compatibility
+                return features.dict()
+            else:
                 return None
-
-            # Analyze preview (async, runs in thread pool)
-            features = await self.audio_analyzer.analyze_preview(
-                preview_url,
-                track_id
-            )
-            return features
-
-        except AudioAnalysisError as e:
-            # Convert specific internal exceptions to RuntimeError
-            raise RuntimeError(
-                f"Failed to analyze audio for track {track_id}: {e}"
-            )
 
         except spotipy.SpotifyException as e:
             raise RuntimeError(f"Failed to get track {track_id}: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to fetch audio features for {track_id}: {e}")

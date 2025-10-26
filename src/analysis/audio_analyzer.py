@@ -38,12 +38,13 @@ class AudioFeatureAnalyzer:
 
     ANALYZER_VERSION = "1.0.0"  # Bump when algorithm changes
 
-    def __init__(self, cache_dir: str = ".audio_cache"):
+    def __init__(self, cache_dir: Optional[str] = None):
         """
         Initialize analyzer with optional caching directory.
 
         Args:
-            cache_dir: Directory for caching analysis results
+            cache_dir: Directory for caching analysis results.
+                      If None, uses system temp directory (recommended for MCP servers).
 
         Raises:
             ImportError: If required audio analysis dependencies are not installed
@@ -54,8 +55,16 @@ class AudioFeatureAnalyzer:
                 "Install with: pip install .[audio]"
             )
 
+        # Use system temp directory by default to avoid permission issues with MCP servers
+        if cache_dir is None:
+            cache_dir = os.path.join(tempfile.gettempdir(), "spotify-mcp-audio-cache")
+        elif not os.path.isabs(cache_dir):
+            # If relative path provided, make it absolute using temp dir
+            cache_dir = os.path.join(tempfile.gettempdir(), cache_dir)
+
         self.cache_dir = cache_dir
         os.makedirs(cache_dir, exist_ok=True)
+        print(f"🗂️  Audio cache directory: {cache_dir}", file=sys.stderr)
 
     async def analyze_preview(
         self,

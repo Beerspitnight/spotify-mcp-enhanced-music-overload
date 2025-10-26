@@ -395,7 +395,7 @@ async def list_tools() -> list[Tool]:
         # Phase 2 - Audio Analysis Tool
         Tool(
             name="get_audio_features",
-            description="Get audio features (BPM, key, energy, etc.) for a track using local analysis of its 30-second preview. Requires track to have preview available (~60-70% of tracks).",
+            description="Get audio features (tempo/BPM, key, mode, danceability, acousticness, energy, valence, etc.) for a track from multiple sources (GetSongBPM, MusicBrainz, AcousticBrainz). Returns None if features unavailable. Coverage varies by track - popular tracks more likely to have data.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -836,6 +836,7 @@ async def main():
     client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
     redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
     cache_path = os.getenv("SPOTIFY_CACHE_PATH", ".spotify_cache")
+    getsongbpm_api_key = os.getenv("GETSONGBPM_API_KEY")
 
     if not client_id or not client_secret:
         print("❌ Error: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET must be set", file=sys.stderr)
@@ -848,7 +849,8 @@ async def main():
         client_id=client_id,
         client_secret=client_secret,
         redirect_uri=redirect_uri,
-        cache_path=cache_path
+        cache_path=cache_path,
+        getsongbpm_api_key=getsongbpm_api_key
     )
 
     # Authenticate (will open browser on first run)

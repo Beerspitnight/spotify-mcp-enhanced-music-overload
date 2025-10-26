@@ -1,6 +1,12 @@
-# Spotify MCP Server
+# Spotify-mcp-Overload
 
-A Model Context Protocol (MCP) server that enables Claude to interact with Spotify for playlist curation and management.
+A Model Context Protocol (MCP) server that enables Claude Code CLI or Desktop to interact with Spotify for playlist curation and management, among other goodies.
+
+### Rock Out with The Following Features:
+- 🧠 Smart playlist curation 
+- 🛤️ Deep track identification 
+- 🕺 Song analysis (bpm, danceability, etc.)
+- 🚀 Discovery & Recommendation (w/ seed validation)
 
 ## Features
 
@@ -18,11 +24,12 @@ A Model Context Protocol (MCP) server that enables Claude to interact with Spoti
 - ✅ **Create curated playlists** - Automated playlist based on your top tracks + recommendations
 - ✅ Find duplicate tracks in playlists
 
-### Audio Analysis (Phase 2 - NEW! 🎵)
-- ✅ **Get audio features** - BPM, musical key, energy, danceability, valence
-- ✅ **Local analysis** - Uses librosa to analyze 30-second preview clips
-- ✅ **Smart caching** - Results cached to avoid re-analysis
-- ⚠️ **Note**: Requires optional `[audio]` dependencies (see installation below)
+### Audio Analysis (Phase 2 - Complete! 🎵)
+- ✅ **Get audio features** - BPM, musical key, energy, danceability, valence, acousticness
+- ✅ **Multi-source data** - GetSongBPM API + MusicBrainz/AcousticBrainz waterfall
+- ✅ **Smart caching** - 30-day TTL, positive/negative caching to reduce API calls
+- ✅ **No preview required** - Works with ISRC lookups, not dependent on 30s previews
+- ⚠️ **Coverage**: ~70-90% for popular/older tracks, ~20-40% for recent releases (2020+)
 
 ### Reliability Features
 - ✅ Automatic retry on Spotify API rate limits (HTTP 429)
@@ -51,40 +58,33 @@ A Model Context Protocol (MCP) server that enables Claude to interact with Spoti
 
 ### 2. Install Dependencies
 
-**Basic Installation** (playlist management only):
 ```bash
 cd spotify-mcp
 pip install -e .
 ```
 
-**With Audio Analysis** (recommended for full features):
-```bash
-pip install -e .[audio]
-```
+This installs all required dependencies including audio features support.
 
-This installs additional dependencies for audio feature extraction:
-- `librosa` - Audio analysis library
-- `soundfile` - Audio file I/O
-- `numpy` - Numerical computing
-- `requests` - HTTP library
+### 3. Get GetSongBPM API Key (Optional but Recommended)
 
-Or with uv:
-```bash
-uv pip install -e .[audio]
-```
+For enhanced audio features coverage:
+1. Go to [GetSongBPM API](https://getsongbpm.com/api)
+2. Sign up for a free API key
+3. Free tier includes 500 requests/month
 
-### 3. Configure Environment
+### 4. Configure Environment
 
 ```bash
 # Copy the example env file
 cp .env.example .env
 
-# Edit .env and add your Spotify credentials
+# Edit .env and add your credentials:
 # SPOTIFY_CLIENT_ID=your_actual_client_id
 # SPOTIFY_CLIENT_SECRET=your_actual_client_secret
+# GETSONGBPM_API_KEY=your_api_key (optional but recommended)
 ```
 
-### 4. First Run Authentication
+### 5. First Run Authentication
 
 The first time you run the server, it will:
 1. Open your browser automatically
@@ -257,31 +257,31 @@ Claude: [Uses create_curated_playlist_from_top_tracks tool]
 🔗 Playlist URL: https://open.spotify.com/playlist/abc123
 ```
 
-### Get Audio Features (NEW! 🎵)
+### Get Audio Features 🎵
 ```
-You: Analyze the audio features of track ID "2Foc5Q5nqNiosCNqttzHof"
+You: Analyze the audio features for Hot Water Music's "I Was On A Mountain"
 
-Claude: [Uses get_audio_features tool]
-🎵 Audio Features (Track: 2Foc5Q5nqNiosCNqttzHof)
+Claude: [Uses search_tracks and get_audio_features tools]
+🎵 Audio Features (Hot Water Music - I Was On A Mountain)
 
 🎼 Musical Properties:
-   - Tempo: 116.2 BPM
-   - Key: C major
+   - Tempo: 102.0 BPM
+   - Key: A minor
+   - Time Signature: 4/4
 
 📊 Energy & Mood:
-   - Energy: 0.75 (0=calm, 1=intense)
-   - Danceability: 0.65 (0=low, 1=high)
-   - Valence: 0.80 (0=sad, 1=happy)
+   - Danceability: 0.440 (moderate)
+   - Acousticness: 0.010 (very electric)
 
-ℹ️  Analysis Method: librosa
-⚠️  Note: Based on 30-second preview
+ℹ️  Data Source: GetSongBPM API
 ```
 
 **Use Cases**:
-- Find tracks with similar BPM for DJ mixes
-- Detect musical key for harmonic mixing
-- Filter tracks by energy level for workout playlists
-- Analyze mood (valence) for themed playlists
+- Find tracks with similar BPM for DJ mixes and workout playlists
+- Detect musical key for harmonic mixing (DJs)
+- Filter tracks by energy/danceability for themed playlists
+- Analyze mood (valence) and acousticness for curation
+- Build setlists with consistent tempo/energy flow
 
 ## Available Tools
 
@@ -297,9 +297,16 @@ Claude: [Uses get_audio_features tool]
 | `find_duplicates` | Find duplicate tracks in a playlist | Case-insensitive matching |
 | **`get_top_tracks`** | **Get user's most-played tracks** | **Time periods: 4 weeks, 6 months, all time** |
 | **`create_curated_playlist_from_top_tracks`** | **Auto-create playlist from top tracks + recommendations** | **One-command automation** |
-| **`get_audio_features`** 🎵 | **Analyze track audio (BPM, key, energy, etc.)** | **Local librosa analysis, Smart caching, Requires [audio] install** |
+| **`get_audio_features`** 🎵 | **Analyze track audio (BPM, key, energy, etc.)** | **Multi-source (GetSongBPM, MusicBrainz, AcousticBrainz), 30-day cache, ~70-90% coverage** |
+| **`get_playlist_stats`** | **Get comprehensive playlist statistics** | **Duration, genre breakdown, avg release year** |
+| **`merge_playlists`** | **Merge multiple playlists with deduplication** | **Auto-dedup, custom descriptions** |
+| **`compare_playlists`** | **Find shared and unique tracks** | **Venn diagram analysis** |
+| **`set_collaborative`** | **Toggle playlist collaborative status** | **Enable/disable collaboration** |
+| **`get_artist_discography`** | **Get artist's complete discography** | **Albums, singles, compilations** |
+| **`get_related_artists`** | **Find similar artists** | **Spotify similarity algorithm** |
+| **`get_artist_top_tracks`** | **Get artist's most popular tracks** | **Country-specific results** |
 
-**Total**: 11 tools available
+**Total**: 18 tools available
 
 ## Reliability Features
 
@@ -353,18 +360,12 @@ Operations that modify playlists automatically batch requests:
   ```
 - After authentication succeeds, the token is cached for Claude Desktop/CLI
 
-### "Audio analysis not available" error
-- Install optional audio dependencies:
-  ```bash
-  pip install -e .[audio]
-  ```
-- This adds librosa, soundfile, numpy, and requests
-- Without these dependencies, the `get_audio_features` tool will not be available
-
 ### "No audio features available" message
-- The track may not have a preview URL (~30-40% of tracks lack previews)
-- Preview availability varies by region and licensing agreements
-- Try searching for different tracks or newer releases (more likely to have previews)
+- Track may be too recent (post-2020 has ~20-40% coverage)
+- Older/classic tracks have better coverage (~70-90%)
+- GetSongBPM API key improves coverage significantly
+- MusicBrainz/AcousticBrainz stopped collecting data in 2022
+- Features are cached for 30 days after lookup
 
 ## Security Notes
 
@@ -385,17 +386,22 @@ pytest
 ```
 spotify-mcp/
 ├── src/
-│   ├── analysis/                  # Audio analysis module (Phase 2)
+│   ├── features/                  # Audio features module (Phase 2)
 │   │   ├── __init__.py
-│   │   ├── audio_analyzer.py      # AudioFeatureAnalyzer class
-│   │   └── exceptions.py          # Custom exceptions
+│   │   ├── models.py             # Pydantic data models
+│   │   ├── cache.py              # File-based caching (30-day TTL)
+│   │   ├── service.py            # Multi-source orchestration
+│   │   └── clients/              # API clients
+│   │       ├── getsongbpm.py     # GetSongBPM API client
+│   │       ├── musicbrainz.py    # MusicBrainz ISRC lookup
+│   │       └── acousticbrainz.py # AcousticBrainz features
 │   ├── clients/
 │   │   └── spotify_client.py      # Spotify API wrapper
 │   ├── logic/
-│   │   ├── playlist_logic.py      # Playlist operations
-│   │   └── artist_logic.py        # Artist operations
+│   │   ├── playlist_logic.py      # Playlist intelligence
+│   │   └── artist_logic.py        # Artist deep dive
 │   └── server.py                  # Main MCP server
-├── pyproject.toml                 # Dependencies (base + [audio])
+├── pyproject.toml                 # Dependencies
 ├── .env.example                   # Example environment variables
 └── README.md
 ```
@@ -411,15 +417,40 @@ MIT License - feel free to modify and distribute.
 
 Issues and pull requests welcome! This implementation includes core features and can be extended with:
 - More Spotify API endpoints
-- Advanced playlist curation algorithms (Phase 2 in progress)
-- ✅ ~~Audio feature analysis~~ (Phase 2 Complete!)
+- Advanced playlist curation algorithms
 - User library management
 - Collaborative filtering
 - Setlist generators (DJ sets, concert setlists)
-- MusicBrainz/Genius API integration
+- Additional audio analysis sources
+
+## Credits
+
+This project is built on top of excellent open-source tools and APIs:
+
+### Core Dependencies
+- **[MCP (Model Context Protocol)](https://modelcontextprotocol.io/)** - Anthropic's protocol for LLM integrations
+- **[Spotipy](https://spotipy.readthedocs.io/)** - Python library for Spotify Web API
+- **[Pydantic](https://docs.pydantic.dev/)** - Data validation using Python type annotations
+
+### Audio Features Data Sources
+- **[GetSongBPM API](https://getsongbpm.com/api)** - Primary source for tempo, key, and audio features
+- **[MusicBrainz](https://musicbrainz.org/)** - Open music encyclopedia for ISRC lookups
+- **[AcousticBrainz](https://acousticbrainz.org/)** - Crowd-sourced acoustic analysis database (archived 2022)
+
+### Development Tools
+- **[httpx](https://www.python-httpx.org/)** - Modern async HTTP client
+- **[tenacity](https://tenacity.readthedocs.io/)** - Retry logic with exponential backoff
+- **[python-dotenv](https://github.com/theskumar/python-dotenv)** - Environment variable management
+
+### Special Thanks
+- The Anthropic team for creating Claude and the MCP specification
+- The Spotify developer community and their comprehensive API documentation
+- All open-source contributors who maintain the libraries this project depends on
 
 ## Resources
 
 - [MCP Documentation](https://modelcontextprotocol.io/)
 - [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api)
 - [Spotipy Library](https://spotipy.readthedocs.io/)
+- [GetSongBPM API Docs](https://getsongbpm.com/api)
+- [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API)
