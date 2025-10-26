@@ -25,16 +25,16 @@ A Model Context Protocol (MCP) server that enables Claude Code CLI or Desktop to
 - ✅ Find duplicate tracks in playlists
 
 ### Audio Analysis (Phase 2 - Complete! 🎵)
-- ✅ **Get audio features** - BPM, musical key, energy, danceability, valence, acousticness
-- ✅ **Multi-source data** - GetSongBPM API + MusicBrainz/AcousticBrainz waterfall
-- ✅ **Smart caching** - 30-day TTL, positive/negative caching to reduce API calls
-- ✅ **No preview required** - Works with ISRC lookups, not dependent on 30s previews
-- ⚠️ **Coverage**: ~70-90% for popular/older tracks, ~20-40% for recent releases (2020+)
+- **Get audio features** - BPM, musical key, energy, danceability, valence, acousticness
+- **Multi-source data** - GetSongBPM API + MusicBrainz/AcousticBrainz waterfall
+-  **Smart caching** - 30-day TTL, positive/negative caching to reduce API calls
+-  **No preview required** - Works with ISRC lookups, not dependent on 30s previews
+-  **Coverage**: ~70-90% for popular/older tracks, ~20-40% for recent releases (2020+)
 
 ### Reliability Features
-- ✅ Automatic retry on Spotify API rate limits (HTTP 429)
-- ✅ Batch processing for large operations (100+ tracks)
-- ✅ Async execution - Audio analysis runs in thread pool (no blocking)
+-  Automatic retry on Spotify API rate limits (HTTP 429)
+-  Batch processing for large operations (100+ tracks)
+-  Async execution - Audio analysis runs in thread pool (no blocking)
 
 ## Prerequisites
 
@@ -65,12 +65,11 @@ pip install -e .
 
 This installs all required dependencies including audio features support.
 
-### 3. Get GetSongBPM API Key (Optional but Recommended)
+### 3. Get Your Free GetSongBPM API Key (Optional but Recommended)
 
 For enhanced audio features coverage:
 1. Go to [GetSongBPM API](https://getsongbpm.com/api)
 2. Sign up for a free API key
-3. Free tier includes 500 requests/month
 
 ### 4. Configure Environment
 
@@ -193,7 +192,7 @@ Found 20 tracks. Adding top 5 to your playlist...
 
 ### Get Recommendations
 ```
-You: Based on my current "Chill Vibes" playlist, recommend 10 similar songs
+You: Based on my current "Psychedelic" playlist, recommend 10 similar songs
 
 Claude: [Uses get_playlist_tracks and get_recommendations tools]
 Here are 10 recommendations based on your playlist...
@@ -205,17 +204,17 @@ You: Show me all my playlists
 
 Claude: [Uses get_user_playlists tool]
 Found 15 playlists:
-1. Morning Energy (Public) - 25 tracks
-2. Chill Vibes (Private) - 40 tracks
+1. Psychedelic (Public) - 25 tracks
+2. Dub Reggae (Private) - 40 tracks
 ...
 ```
 
 ### Remove Tracks
 ```
-You: Remove all tracks by "The Killers" from my workout playlist
+You: Remove all tracks by "Black Sabbath" from my workout playlist
 
 Claude: [Uses get_playlist_tracks and remove_tracks_from_playlist tools]
-Found 3 tracks by The Killers. Removing...
+Found 3 tracks by Black Sabbath. Removing...
 ✅ Removed 3 tracks from playlist
 ```
 
@@ -225,8 +224,8 @@ You: Find duplicate songs in my "Favorites" playlist
 
 Claude: [Uses find_duplicates tool]
 Found 5 duplicate tracks:
-1. "Mr. Brightside" by The Killers - 2 occurrences
-2. "Take On Me" by A-ha - 2 occurrences
+1. "I Was On A Mountain" by Hot Water Music - 2 occurrences
+2. "Suffer" by Bad Religion - 2 occurrences
 ...
 ```
 
@@ -238,7 +237,7 @@ Claude: [Uses get_top_tracks tool]
 Your top 20 tracks (last 6 months):
 1. Saboteurs by Dave Hause
 2. Web in Front by Archers Of Loaf
-3. Sweetness by Jimmy Eat World
+3. Cabin Fever by Slomosa
 ...
 ```
 
@@ -262,7 +261,7 @@ Claude: [Uses create_curated_playlist_from_top_tracks tool]
 You: Analyze the audio features for Hot Water Music's "I Was On A Mountain"
 
 Claude: [Uses search_tracks and get_audio_features tools]
-🎵 Audio Features (Hot Water Music - I Was On A Mountain)
+🎵 Audio Features (The Mighty Mighty Bosstones - I Hope I Never Lose My Wallet)
 
 🎼 Musical Properties:
    - Tempo: 102.0 BPM
@@ -411,7 +410,7 @@ Access from https://getsongbpm.com/ via their free API provides song-analysis in
 
 ## License
 
-MIT License - feel free to modify and distribute.
+MIT License - feel free to modify and distribute. Make it better.  Make it cooler.
 
 ## Contributing
 
@@ -433,9 +432,9 @@ This project is built on top of excellent open-source tools and APIs:
 - **[Pydantic](https://docs.pydantic.dev/)** - Data validation using Python type annotations
 
 ### Audio Features Data Sources
-- **[GetSongBPM API](https://getsongbpm.com/api)** - Primary source for tempo, key, and audio features
-- **[MusicBrainz](https://musicbrainz.org/)** - Open music encyclopedia for ISRC lookups
-- **[AcousticBrainz](https://acousticbrainz.org/)** - Crowd-sourced acoustic analysis database (archived 2022)
+- **[GetSongBPM API](https://getsongbpm.com/api)** - Primary source for tempo, key, and audio features - mucho gracias
+- **[MusicBrainz](https://musicbrainz.org/)** - Open music encyclopedia for ISRC lookups - killer
+- **[AcousticBrainz](https://acousticbrainz.org/)** - Crowd-sourced acoustic analysis database (archived 2022) - very cool
 
 ### Development Tools
 - **[httpx](https://www.python-httpx.org/)** - Modern async HTTP client
@@ -443,9 +442,8 @@ This project is built on top of excellent open-source tools and APIs:
 - **[python-dotenv](https://github.com/theskumar/python-dotenv)** - Environment variable management
 
 ### Special Thanks
-- The Anthropic team for creating Claude and the MCP specification
-- The Spotify developer community and their comprehensive API documentation
-- All open-source contributors who maintain the libraries this project depends on
+My mom and Dad.
+Claude in all his different clothes
 
 ## Resources
 
