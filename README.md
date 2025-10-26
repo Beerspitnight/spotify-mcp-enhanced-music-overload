@@ -10,28 +10,28 @@ A Model Context Protocol (MCP) server that enables Claude Code CLI or Desktop to
 
 ## Features
 
-### Core Playlist Management
-- ✅ Create playlists
-- ✅ Search for tracks
-- ✅ Add tracks to playlists (with automatic rate limit handling)
-- ✅ Remove tracks from playlists (with automatic rate limit handling)
-- ✅ Get user playlists
-- ✅ Get playlist tracks
+### 🚦Core Playlist Management
+-  Create playlists
+-  Search for tracks
+-  Add tracks to playlists (with automatic rate limit handling)
+-  Remove tracks from playlists (with automatic rate limit handling)
+-  Get user playlists
+-  Get playlist tracks
 
-### Smart Curation & Discovery
-- ✅ **Get your top tracks** - See what you listen to most (by time period)
-- ✅ Get track recommendations (with seed validation)
-- ✅ **Create curated playlists** - Automated playlist based on your top tracks + recommendations
-- ✅ Find duplicate tracks in playlists
+### 🧠 Smart Curation & Discovery
+-  **Get your top tracks** - See what you listen to most (by time period)
+-  Get track recommendations (with seed validation)
+-  **Create curated playlists** - Automated playlist based on your top tracks + recommendations
+-  Find duplicate tracks in playlists
 
-### Audio Analysis (Phase 2 - Complete! 🎵)
+### 📈 Audio Analysis 
 - **Get audio features** - BPM, musical key, energy, danceability, valence, acousticness
 - **Multi-source data** - GetSongBPM API + MusicBrainz/AcousticBrainz waterfall
 -  **Smart caching** - 30-day TTL, positive/negative caching to reduce API calls
 -  **No preview required** - Works with ISRC lookups, not dependent on 30s previews
 -  **Coverage**: ~70-90% for popular/older tracks, ~20-40% for recent releases (2020+)
 
-### Reliability Features
+### 🛠️ Reliability Features
 -  Automatic retry on Spotify API rate limits (HTTP 429)
 -  Batch processing for large operations (100+ tracks)
 -  Async execution - Audio analysis runs in thread pool (no blocking)
