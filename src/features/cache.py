@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Optional
 from datetime import datetime, timedelta
 
@@ -18,18 +19,24 @@ class FeatureCache:
     Uses JSON files in a cache directory. Supports TTL for cache invalidation.
     """
 
-    def __init__(self, cache_dir: str = ".feature_cache", ttl_days: int = 30):
+    def __init__(self, cache_dir: Optional[str] = None, ttl_days: int = 30):
         """
         Initialize cache.
 
         Args:
-            cache_dir: Directory to store cache files
+            cache_dir: Directory to store cache files. If None, uses ~/.spotify-mcp/feature_cache
             ttl_days: Cache time-to-live in days
         """
+        # Use home directory if no cache_dir provided
+        if cache_dir is None:
+            cache_dir = str(Path.home() / '.spotify-mcp' / 'feature_cache')
+        
         self.cache_dir = cache_dir
         self.ttl = timedelta(days=ttl_days)
+        
+        # Create cache directory (now using absolute path)
         os.makedirs(cache_dir, exist_ok=True)
-        logger.debug(f"Feature cache initialized at: {cache_dir}")
+        logger.debug("Feature cache initialized at: %s", cache_dir)
 
     def _get_cache_path(self, track_id: str) -> str:
         """Get cache file path for track ID."""
@@ -51,7 +58,7 @@ class FeatureCache:
             return None
 
         try:
-            with open(cache_path, 'r') as f:
+            with open(cache_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             # Check if cache is still valid
@@ -59,20 +66,20 @@ class FeatureCache:
             age = datetime.utcnow() - retrieved_at
 
             if age > self.ttl:
-                logger.debug(f"Cache expired for track: {track_id}")
+                logger.debug("Cache expired for track: %s", track_id)
                 os.unlink(cache_path)
                 return None
 
             # Check for negative cache (no features found)
             if data.get("_not_found"):
-                logger.debug(f"Negative cache hit for track: {track_id}")
+                logger.debug("Negative cache hit for track: %s", track_id)
                 return None
 
-            logger.debug(f"Cache hit for track: {track_id}")
+            logger.debug("Cache hit for track: %s", track_id)
             return AudioFeatures(**data)
 
         except (json.JSONDecodeError, KeyError, ValueError, OSError) as e:
-            logger.warning(f"Failed to read cache for track {track_id}: {e}")
+            logger.warning("Failed to read cache for track %s: %s", track_id, e)
             # Clean up corrupted cache file
             try:
                 os.unlink(cache_path)
@@ -104,13 +111,13 @@ class FeatureCache:
                 if "retrieved_at" in data and isinstance(data["retrieved_at"], datetime):
                     data["retrieved_at"] = data["retrieved_at"].isoformat()
 
-            with open(cache_path, 'w') as f:
+            with open(cache_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
 
-            logger.debug(f"Cached features for track: {track_id}")
+            logger.debug("Cached features for track: %s", track_id)
 
         except (OSError, TypeError) as e:
-            logger.warning(f"Failed to write cache for track {track_id}: {e}")
+            logger.warning("Failed to write cache for track %s: %s", track_id, e)
 
     async def clear(self, track_id: Optional[str] = None) -> None:
         """
@@ -123,7 +130,7 @@ class FeatureCache:
             cache_path = self._get_cache_path(track_id)
             try:
                 os.unlink(cache_path)
-                logger.debug(f"Cleared cache for track: {track_id}")
+                logger.debug("Cleared cache for track: %s", track_id)
             except OSError:
                 pass
         else:
@@ -134,4 +141,4 @@ class FeatureCache:
                         os.unlink(os.path.join(self.cache_dir, filename))
                 logger.info("Cleared entire feature cache")
             except OSError as e:
-                logger.warning(f"Failed to clear cache: {e}")
+                logger.warning("Failed to clear cache: %s", e)
