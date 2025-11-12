@@ -58,13 +58,16 @@ class SpotifyClient:
             "user-top-read",
         ])
 
+        # Detect if running in container (disable browser for Docker/glama.ai)
+        in_container = os.path.exists('/.dockerenv') or os.getenv('GLAMA_VERSION')
+
         self.auth_manager = SpotifyOAuth(
             client_id=client_id,
             client_secret=client_secret,
             redirect_uri=redirect_uri,
             scope=self.scope,
             cache_path=cache_path,
-            open_browser=True  # Will open browser for first-time auth
+            open_browser=not in_container  # Disable browser in containers
         )
 
         self.sp: Optional[spotipy.Spotify] = None

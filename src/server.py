@@ -853,12 +853,12 @@ async def main():
         getsongbpm_api_key=getsongbpm_api_key
     )
 
-    # Authenticate (will open browser on first run)
+    # Try to authenticate (will skip if credentials are invalid/dummy)
     try:
         spotify_client.authenticate()
     except Exception as e:
-        print(f"❌ Authentication failed: {e}", file=sys.stderr)
-        sys.exit(1)
+        print(f"⚠️  Authentication skipped: {e}", file=sys.stderr)
+        print(f"ℹ️  Server will start but API calls will fail until authenticated", file=sys.stderr)
 
     # Initialize business logic
     playlist_logic = PlaylistLogic(spotify_client)
