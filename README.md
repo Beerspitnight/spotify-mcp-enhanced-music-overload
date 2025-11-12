@@ -452,3 +452,6 @@ Claude in all his different clothes
 - [Spotipy Library](https://spotipy.readthedocs.io/)
 - [GetSongBPM API Docs](https://getsongbpm.com/api)
 - [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API)
+
+<a href="https://glama.ai/mcp/servers/@Beerspitnight/Bruno">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@Beerspitnight/Bruno/badge" />
