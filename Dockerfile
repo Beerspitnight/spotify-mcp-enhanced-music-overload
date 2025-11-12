@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Clone your repo (replace with your actual GitHub link)
-RUN git clone https://github.com/Beerspitnight/Bruno.git . 
+RUN git clone https://github.com/Beerspitnight/spotify-mcp-enhanced-music-overload . 
 
 # Install dependencies (adjust if you have requirements.txt or package.json)
 RUN pip install --no-cache-dir -r requirements.txt || true
