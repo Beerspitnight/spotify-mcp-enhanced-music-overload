@@ -4,6 +4,6 @@
     "Beerspitnight"
   ],
   "name": "Bruno",
-  "description": "A research-informed AI workspace and MCP server developed by Bruno, integrating education, learning science, and practical AI tools.",
-  "repository": "https://github.com/Beerspitnight/Bruno"
+  "description": "Spotify MCP server for playlist curation and management, among other goodies.",
+  "repository": "https://github.com/Beerspitnight/spotify-mcp-enhanced-music-overload"
 }
