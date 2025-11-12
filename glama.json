@@ -3,7 +3,7 @@
   "maintainers": [
     "Beerspitnight"
   ],
-  "name": "Bruno",
-  "description": "Spotify MCP server for playlist curation and management, among other goodies.",
+  "name": "spotify-mcp",
+  "description": "A Model Context Protocol (MCP) server that enables Claude to interact with Spotify for playlist curation and management with smart features like audio analysis, track recommendations, and automated playlist creation.",
   "repository": "https://github.com/Beerspitnight/spotify-mcp-enhanced-music-overload"
 }
