@@ -4,18 +4,37 @@ import asyncio
 import os
 import sys
 from typing import Any
-from dotenv import load_dotenv
+
+# Print startup message immediately for debugging
+print("🚀 Starting Spotify MCP Server...", file=sys.stderr, flush=True)
+
+try:
+    from dotenv import load_dotenv
+except ImportError as e:
+    print(f"⚠️  dotenv not available: {e}", file=sys.stderr, flush=True)
+    # Define dummy load_dotenv if not available
+    def load_dotenv(): pass
 
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(__file__))
 
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+try:
+    from mcp.server import Server
+    from mcp.server.stdio import stdio_server
+    from mcp.types import Tool, TextContent
+    print("✓ MCP imports successful", file=sys.stderr, flush=True)
+except ImportError as e:
+    print(f"❌ Failed to import MCP: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
-from clients.spotify_client import SpotifyClient
-from logic.playlist_logic import PlaylistLogic
-from logic.artist_logic import ArtistLogic
+try:
+    from clients.spotify_client import SpotifyClient
+    from logic.playlist_logic import PlaylistLogic
+    from logic.artist_logic import ArtistLogic
+    print("✓ Local imports successful", file=sys.stderr, flush=True)
+except ImportError as e:
+    print(f"❌ Failed to import local modules: {e}", file=sys.stderr, flush=True)
+    sys.exit(1)
 
 
 # Load environment variables
