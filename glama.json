@@ -1,0 +1,9 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "Beerspitnight"
+  ],
+  "name": "Bruno",
+  "description": "A research-informed AI workspace and MCP server developed by Bruno, integrating education, learning science, and practical AI tools.",
+  "repository": "https://github.com/Beerspitnight/Bruno"
+}
