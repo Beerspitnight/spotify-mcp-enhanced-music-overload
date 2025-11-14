@@ -1,0 +1,40 @@
+runtime: "container"
+
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+
+# This tells Smithery that your server runs as an HTTP service.
+startCommand:
+  type: "http"
+
+# This section is for the variables you were adding in your screenshot.
+configSchema:
+  type: "object"
+
+  # List all the environment variables your server requires here
+  # These MUST be provided by the user for the server to start.
+  required:
+    - "SPOTIFY_CLIENT_ID"
+    - "SPOTIFY_CLIENT_SECRET"
+    - "SPOTIFY_REDIRECT_URI"
+    # Note: I left CACHE_PATH as optional, but if your app
+    # MUST have it, add it to this 'required' list.
+
+  # Define each variable so Smithery can create the input form
+  properties:
+    SPOTIFY_CLIENT_ID:
+      type: "string"
+      description: "API Client ID from the Spotify Developer Dashboard."
+
+    SPOTIFY_CLIENT_SECRET:
+      type: "string"
+      description: "API Client Secret from the Spotify Developer Dashboard."
+
+    SPOTIFY_REDIRECT_URI:
+      type: "string"
+      description: "The redirect URI configured in your Spotify app."
+
+    SPOTIFY_CACHE_PATH:
+      type: "string"
+      description: "Path for storing the cache file (e.g., ./.spotify-cache)"
