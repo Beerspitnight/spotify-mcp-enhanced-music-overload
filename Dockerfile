@@ -1,9 +1,7 @@
-# Dockerfile for Spotify MCP Server
+# Start from the same base
 FROM python:3.10-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && apt-get clean \
@@ -11,24 +9,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# --- Optimization Starts Here ---
 
-# Install Python dependencies
+# 1. Copy ONLY the files that define your dependencies
+COPY pyproject.toml .
+# If you had a requirements.txt, you'd copy it here too
+# COPY requirements.txt .
+
+# 2. Install the dependencies
+# This step will now be cached and only re-run if
+# pyproject.toml (or requirements.txt) changes.
 RUN pip install --no-cache-dir -e .
 
-# Expose port 8888 for Spotify OAuth callback
+# 3. NOW copy the rest of your project's source code
+COPY . .
+# (A more advanced version might just be "COPY src/ src/")
+
+# --- End of Optimization ---
+
+# The rest is the same
 EXPOSE 8888
-
-# Set default environment variables
 ENV SPOTIFY_CACHE_PATH=.spotify_cache
-
-# Required environment variables (pass these when running the container):
-# - SPOTIFY_CLIENT_ID: Your Spotify API client ID
-# - SPOTIFY_CLIENT_SECRET: Your Spotify API client secret
-# - SPOTIFY_REDIRECT_URI: OAuth redirect URI (default: http://127.0.0.1:8888/callback)
-# Optional:
-# - GETSONGBPM_API_KEY: For enhanced audio analysis coverage
-
-# Run the server
 CMD ["python", "-m", "src.server"]
