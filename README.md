@@ -441,9 +441,7 @@ This project is built on top of excellent open-source tools and APIs:
 - **[tenacity](https://tenacity.readthedocs.io/)** - Retry logic with exponential backoff
 - **[python-dotenv](https://github.com/theskumar/python-dotenv)** - Environment variable management
 
-### Special Thanks
-My mom and Dad.
-Claude in all his different clothes
+[![smithery badge](https://smithery.ai/badge/@Beerspitnight/spotify-overload)](https://smithery.ai/server/@Beerspitnight/spotify-overload)
 
 ## Resources
 
