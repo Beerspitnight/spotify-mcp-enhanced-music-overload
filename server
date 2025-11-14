@@ -1,0 +1,3 @@
+#!/bin/bash
+# Wrapper script for glama.ai that activates venv
+exec /app/.venv/bin/python -m src.server "$@"
