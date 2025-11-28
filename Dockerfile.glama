@@ -27,5 +27,7 @@ COPY . .
 # Install dependencies with uv
 RUN uv sync
 
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Use the venv's Python for running the server
 CMD ["mcp-proxy", "/app/.venv/bin/python", "-m", "src.server"]
