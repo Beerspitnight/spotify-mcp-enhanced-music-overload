@@ -857,10 +857,16 @@ async def main():
     cache_path = os.getenv("SPOTIFY_CACHE_PATH", ".spotify_cache")
     getsongbpm_api_key = os.getenv("GETSONGBPM_API_KEY")
 
-    if not client_id or not client_secret:
-        print("❌ Error: SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET must be set", file=sys.stderr)
-        print("Create a .env file based on .env.example", file=sys.stderr)
-        sys.exit(1)
+    # --- FIX START ---
+    # Allow server to start with dummy credentials for Glama Inspection
+    if not client_id:
+        print("⚠️  Warning: SPOTIFY_CLIENT_ID not set. Using dummy ID for inspection.", file=sys.stderr)
+        client_id = "DUMMY_CLIENT_ID"
+    
+    if not client_secret:
+        print("⚠️  Warning: SPOTIFY_CLIENT_SECRET not set. Using dummy secret for inspection.", file=sys.stderr)
+        client_secret = "DUMMY_CLIENT_SECRET"
+    # --- FIX END ---
 
     # Initialize Spotify client
     print("🎵 Initializing Spotify MCP Server...", file=sys.stderr)
@@ -872,12 +878,12 @@ async def main():
         getsongbpm_api_key=getsongbpm_api_key
     )
 
-    # Try to authenticate (will skip if credentials are invalid/dummy)
+    # Try to authenticate (This will fail gracefully now)
     try:
         spotify_client.authenticate()
     except Exception as e:
-        print(f"⚠️  Authentication skipped: {e}", file=sys.stderr)
-        print(f"ℹ️  Server will start but API calls will fail until authenticated", file=sys.stderr)
+        print(f"⚠️  Authentication skipped (Expected during inspection): {e}", file=sys.stderr)
+        print(f"ℹ️  Server running in 'Offline/Inspection' mode.", file=sys.stderr)
 
     # Initialize business logic
     playlist_logic = PlaylistLogic(spotify_client)
@@ -892,7 +898,5 @@ async def main():
             write_stream,
             server.create_initialization_options()
         )
-
-
 if __name__ == "__main__":
     asyncio.run(main())
