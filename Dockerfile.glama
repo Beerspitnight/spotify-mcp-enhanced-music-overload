@@ -21,13 +21,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy repository files
+# Copy all files
 COPY . .
 
-# Install dependencies with uv
+# Create virtual environment and install dependencies
 RUN uv sync
 
+# --- CRITICAL FIX: FORCE PATH TO USE VENV ---
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Use the venv's Python for running the server
-CMD ["mcp-proxy", "/app/.venv/bin/python", "-m", "src.server"]
+# Run the server using 'python' (which now points to the venv)
+CMD ["mcp-proxy", "python", "-m", "src.server"]
