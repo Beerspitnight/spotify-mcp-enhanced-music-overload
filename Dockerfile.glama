@@ -3,32 +3,12 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive \
     GLAMA_VERSION="1.0.0"
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    git \
-    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g mcp-proxy@5.5.4 pnpm@10.14.0 \
-    && node --version \
-    && curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="/usr/local/bin" sh \
-    && uv python install 3.10 --default --preview \
-    && ln -s $(uv python find) /usr/local/bin/python \
-    && python --version \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && apt-get install -y --no-install-recommends nodejs && npm install -g mcp-proxy@5.5.4 pnpm@10.14.0 && node --version && curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="/usr/local/bin" sh && uv python install 3.10 --default --preview && ln -s $(uv python find) /usr/local/bin/python && python --version && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /app
 
-# Copy all files
-COPY . .
+RUN git clone https://github.com/Beerspitnight/spotify-mcp-enhanced-music-overload . && git checkout 24ae43972da2961485763f47a1ec129010116b0f
 
-# Create virtual environment and install dependencies
-RUN uv sync
+RUN (uv sync)
 
-# --- CRITICAL FIX: FORCE PATH TO USE VENV ---
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Run the server using 'python' (which now points to the venv)
-CMD ["mcp-proxy", "python", "-m", "src.server"]
+CMD ["mcp-proxy","python","src/server.py"]
