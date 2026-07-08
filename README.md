@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/beerspitnight-spotify-mcp-enhanced-music-overload-badge.png)](https://mseep.ai/app/beerspitnight-spotify-mcp-enhanced-music-overload)
+
 # Spotify-mcp-Overload
 
 A Model Context Protocol (MCP) server that enables Claude Code CLI or Desktop to interact with Spotify for playlist curation and management, among other goodies.
